@@ -1,4 +1,7 @@
 # 🛒 Superstore Profit Prediction — Machine Learning Project
+## 🌐 Live Demo
+👉 [Click here — Live Web App](https://kumail-analyst.github.io/Superstore-Profit-Prediction-Machine-Learning-Project/profit_predictor.html)
+```
 ## 📌 Project Overview
 
 This project predicts whether a retail order from the **Sample Superstore dataset** will be **Profitable or result in a Loss**, using Machine Learning classification models.
