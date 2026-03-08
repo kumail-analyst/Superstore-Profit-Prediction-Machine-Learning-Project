@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superstore Profit Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --card: #13131a;
+  --border: #1e1e2e;
+  --accent: #6ee7b7;
+  --text: #e2e8f0;
+  --muted: #64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+.container { max-width: 860px; margin: 0 auto; }
+.header { text-align:center; margin-bottom:40px; }
+.badge {
+  display:inline-block;
+  background:rgba(110,231,183,0.1);
+  border:1px solid rgba(110,231,183,0.3);
+  color:var(--accent);
+  font-size:11px; font-weight:600;
+  letter-spacing:2px; text-transform:uppercase;
+  padding:6px 14px; border-radius:20px; margin-bottom:18px;
+}
+h1 {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2rem,5vw,3.2rem);
+  font-weight:800;
+  background:linear-gradient(135deg,#fff 40%,var(--accent));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text; margin-bottom:12px;
+}
+.subtitle { color:var(--muted); font-size:15px; max-width:480px; margin:0 auto; line-height:1.6; }
+.stats { display:flex; gap:14px; margin-bottom:36px; flex-wrap:wrap; }
+.stat {
+  flex:1; min-width:120px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:16px; text-align:center;
+}
+.stat-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:var(--accent); }
+.stat-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+.card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:36px; margin-bottom:28px;
+}
+.card-title {
+  font-family:'Syne',sans-serif; font-size:17px; font-weight:700;
+  margin-bottom:26px; display:flex; align-items:center; gap:10px;
+}
+.card-title::before { content:''; width:4px; height:20px; background:var(--accent); border-radius:2px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; }
+.field { display:flex; flex-direction:column; gap:7px; }
+label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+select, input[type="number"] {
+  background:#0d0d14; border:1px solid var(--border);
+  border-radius:10px; color:var(--text);
+  padding:11px 14px; font-size:14px;
+  font-family:'DM Sans',sans-serif; outline:none;
+  transition:border-color 0.2s;
+  width:100%;
+}
+select { cursor:pointer; }
+select:focus, input:focus { border-color:var(--accent); }
+select option { background:#13131a; }
+.range-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.range-num { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--accent); }
+input[type="range"] {
+  width:100%; height:4px; appearance:none;
+  background:var(--border); border-radius:2px;
+  outline:none; cursor:pointer;
+  border:none; padding:0; box-shadow:none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance:none; width:18px; height:18px;
+  border-radius:50%; background:var(--accent);
+  cursor:pointer; border:3px solid var(--bg);
+}
+.range-marks { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:5px; }
+.full { grid-column: 1 / -1; }
+.btn {
+  width:100%; padding:17px;
+  background:linear-gradient(135deg,#6ee7b7,#34d399);
+  border:none; border-radius:12px;
+  color:#0a0a0f; font-family:'Syne',sans-serif;
+  font-size:15px; font-weight:700; letter-spacing:1px;
+  cursor:pointer; margin-top:24px;
+  text-transform:uppercase; transition:opacity 0.2s, transform 0.2s;
+}
+.btn:hover { opacity:0.92; transform:translateY(-1px); }
+.result {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:36px;
+  text-align:center; display:none;
+}
+.result.show { display:block; }
+.res-icon { font-size:60px; margin-bottom:14px; display:block; }
+.res-lbl { font-size:12px; text-transform:uppercase; letter-spacing:2px; color:var(--muted); margin-bottom:10px; }
+.res-verdict {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2rem,6vw,3.8rem);
+  font-weight:800; margin-bottom:10px;
+}
+.res-verdict.profit { color:#6ee7b7; }
+.res-verdict.loss { color:#f87171; }
+.res-conf { color:var(--muted); font-size:14px; margin-bottom:22px; }
+.bar-wrap { background:var(--border); border-radius:6px; height:8px; max-width:380px; margin:0 auto 24px; overflow:hidden; }
+.bar { height:100%; border-radius:6px; transition:width 1s ease; width:0%; }
+.bar.profit { background:linear-gradient(90deg,#34d399,#6ee7b7); }
+.bar.loss { background:linear-gradient(90deg,#ef4444,#f87171); }
+.tags { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.tag { padding:5px 13px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid; }
+.tag.good { background:rgba(110,231,183,0.1); border-color:rgba(110,231,183,0.3); color:#6ee7b7; }
+.tag.bad { background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.3); color:#f87171; }
+.footer { text-align:center; color:var(--muted); font-size:12px; margin-top:36px; padding-top:18px; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="badge">ML-Powered Prediction</div>
+    <h1>Profit Predictor</h1>
+    <p class="subtitle">Order details bharo — Random Forest model predict karega Profit hoga ya Loss</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">94.4%</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat"><div class="stat-val">9,994</div><div class="stat-lbl">Training Rows</div></div>
+    <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Trees</div></div>
+    <div class="stat"><div class="stat-val">8</div><div class="stat-lbl">Features</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Order Details</div>
+    <div class="grid">
+
+      <div class="field">
+        <label>Category</label>
+        <select id="sel-category">
+          <option>Furniture</option>
+          <option>Office Supplies</option>
+          <option>Technology</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Sub-Category</label>
+        <select id="sel-subcat"></select>
+      </div>
+
+      <div class="field">
+        <label>Region</label>
+        <select id="sel-region">
+          <option>Central</option>
+          <option>East</option>
+          <option>South</option>
+          <option>West</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Segment</label>
+        <select id="sel-segment">
+          <option>Consumer</option>
+          <option>Corporate</option>
+          <option>Home Office</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Ship Mode</label>
+        <select id="sel-shipmode">
+          <option>Standard Class</option>
+          <option>Second Class</option>
+          <option>First Class</option>
+          <option>Same Day</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Quantity</label>
+        <input type="number" id="inp-qty" min="1" max="14" value="3">
+      </div>
+
+      <div class="field full">
+        <label>Discount</label>
+        <div class="range-row">
+          <span style="color:var(--muted);font-size:13px;">Discount Amount</span>
+          <span class="range-num" id="disc-label">0%</span>
+        </div>
+        <input type="range" id="inp-discount" min="0" max="80" value="0" step="5">
+        <div class="range-marks"><span>0%</span><span>20%</span><span>40%</span><span>60%</span><span>80%</span></div>
+      </div>
+
+      <div class="field full">
+        <label>Sales Amount (USD)</label>
+        <input type="number" id="inp-sales" min="1" max="25000" value="250" step="10">
+      </div>
+
+    </div>
+
+    <button class="btn" id="predict-btn">PREDICT NOW</button>
+  </div>
+
+  <div class="result" id="result-card">
+    <span class="res-icon" id="res-icon"></span>
+    <div class="res-lbl">Prediction Result</div>
+    <div class="res-verdict" id="res-verdict"></div>
+    <div class="res-conf" id="res-conf"></div>
+    <div class="bar-wrap"><div class="bar" id="res-bar"></div></div>
+    <div class="tags" id="res-tags"></div>
+  </div>
+
+  <div class="footer">Random Forest Model · Superstore Dataset · 9,994 rows</div>
+
+</div>
+
+<script>
+var SUBCATS = {
+  "Furniture": ["Bookcases","Chairs","Furnishings","Tables"],
+  "Office Supplies": ["Appliances","Art","Binders","Envelopes","Fasteners","Labels","Paper","Storage","Supplies"],
+  "Technology": ["Accessories","Copiers","Machines","Phones"]
+};
+
+var ENC = {
+  "Category": {"Furniture":0,"Office Supplies":1,"Technology":2},
+  "Sub-Category": {"Accessories":0,"Appliances":1,"Art":2,"Binders":3,"Bookcases":4,"Chairs":5,"Copiers":6,"Envelopes":7,"Fasteners":8,"Furnishings":9,"Labels":10,"Machines":11,"Paper":12,"Phones":13,"Storage":14,"Supplies":15,"Tables":16},
+  "Region": {"Central":0,"East":1,"South":2,"West":3},
+  "Segment": {"Consumer":0,"Corporate":1,"Home Office":2},
+  "Ship Mode": {"First Class":0,"Same Day":1,"Second Class":2,"Standard Class":3}
+};
+
+var FEATURES = ["Category","Sub-Category","Region","Segment","Ship Mode","Quantity","Discount","Sales"];
+
+var TREES = [{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Sales","threshold":46.66,"left":{"leaf":false,"feature":"Sub-Category","threshold":12.5,"left":{"leaf":true,"prob":0.999},"right":{"leaf":true,"prob":0.697}},"right":{"leaf":false,"feature":"Sub-Category","threshold":9.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":true,"prob":0.981}}},"right":{"leaf":false,"feature":"Discount","threshold":0.1,"left":{"leaf":true,"prob":1.0},"right":{"leaf":false,"feature":"Sales","threshold":69.77,"left":{"leaf":true,"prob":0.957},"right":{"leaf":true,"prob":0.293}}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sales","threshold":32.68,"left":{"leaf":true,"prob":0.6},"right":{"leaf":true,"prob":0.03}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Region","threshold":2.5,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":true,"prob":0.998},"right":{"leaf":true,"prob":0.958}},"right":{"leaf":false,"feature":"Category","threshold":0.5,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.989}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Quantity","threshold":9.5,"left":{"leaf":true,"prob":0.088},"right":{"leaf":true,"prob":1.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Sales","threshold":64.74,"left":{"leaf":true,"prob":0.97},"right":{"leaf":true,"prob":0.813}},"right":{"leaf":false,"feature":"Sales","threshold":236.5,"left":{"leaf":true,"prob":0.253},"right":{"leaf":true,"prob":0.464}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Quantity","threshold":9.5,"left":{"leaf":true,"prob":0.05},"right":{"leaf":true,"prob":1.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Discount","threshold":0.1,"left":{"leaf":true,"prob":0.999},"right":{"leaf":true,"prob":0.887}},"right":{"leaf":false,"feature":"Ship Mode","threshold":2.5,"left":{"leaf":true,"prob":0.942},"right":{"leaf":true,"prob":0.419}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sales","threshold":830.64,"left":{"leaf":true,"prob":0.029},"right":{"leaf":true,"prob":0.5}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Region","threshold":1.5,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":true,"prob":0.984},"right":{"leaf":true,"prob":0.943}},"right":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":true,"prob":0.979},"right":{"leaf":true,"prob":0.462}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Quantity","threshold":9.5,"left":{"leaf":true,"prob":0.095},"right":{"leaf":true,"prob":1.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Sales","threshold":23.02,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.889}},"right":{"leaf":false,"feature":"Quantity","threshold":10.0,"left":{"leaf":true,"prob":0.719},"right":{"leaf":true,"prob":0.0}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sales","threshold":368.0,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Discount","threshold":0.1,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.866}},"right":{"leaf":false,"feature":"Ship Mode","threshold":0.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":true,"prob":0.429}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sales","threshold":830.0,"left":{"leaf":true,"prob":0.2},"right":{"leaf":true,"prob":0.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Sales","threshold":64.76,"left":{"leaf":true,"prob":0.969},"right":{"leaf":true,"prob":0.747}},"right":{"leaf":false,"feature":"Sales","threshold":82.97,"left":{"leaf":true,"prob":0.0},"right":{"leaf":true,"prob":0.963}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Quantity","threshold":9.5,"left":{"leaf":true,"prob":0.09},"right":{"leaf":true,"prob":1.0}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Sales","threshold":19.02,"left":{"leaf":true,"prob":0.992},"right":{"leaf":true,"prob":0.968}},"right":{"leaf":false,"feature":"Discount","threshold":0.1,"left":{"leaf":true,"prob":0.985},"right":{"leaf":true,"prob":0.538}}},"right":{"leaf":false,"feature":"Sub-Category","threshold":5.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sub-Category","threshold":7.5,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.031}}}},{"leaf":false,"feature":"Discount","threshold":0.25,"left":{"leaf":false,"feature":"Sub-Category","threshold":13.5,"left":{"leaf":false,"feature":"Discount","threshold":0.1,"left":{"leaf":true,"prob":1.0},"right":{"leaf":true,"prob":0.93}},"right":{"leaf":false,"feature":"Ship Mode","threshold":2.5,"left":{"leaf":true,"prob":0.844},"right":{"leaf":true,"prob":0.702}}},"right":{"leaf":false,"feature":"Category","threshold":1.5,"left":{"leaf":true,"prob":0.0},"right":{"leaf":false,"feature":"Sales","threshold":567.3,"left":{"leaf":true,"prob":0.25},"right":{"leaf":true,"prob":0.25}}}}];
+
+function fillSubcat() {
+  var cat = document.getElementById('sel-category').value;
+  var sel = document.getElementById('sel-subcat');
+  sel.innerHTML = '';
+  var list = SUBCATS[cat] || [];
+  for (var i = 0; i < list.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = list[i];
+    opt.textContent = list[i];
+    sel.appendChild(opt);
+  }
+}
+
+function walkTree(node, inp) {
+  if (node.leaf) return node.prob;
+  var idx = FEATURES.indexOf(node.feature);
+  if (inp[idx] <= node.threshold) return walkTree(node.left, inp);
+  return walkTree(node.right, inp);
+}
+
+function runPredict() {
+  var cat      = document.getElementById('sel-category').value;
+  var subcat   = document.getElementById('sel-subcat').value;
+  var region   = document.getElementById('sel-region').value;
+  var segment  = document.getElementById('sel-segment').value;
+  var shipmode = document.getElementById('sel-shipmode').value;
+  var qty      = parseFloat(document.getElementById('inp-qty').value) || 1;
+  var disc     = parseFloat(document.getElementById('inp-discount').value) / 100;
+  var sales    = parseFloat(document.getElementById('inp-sales').value) || 100;
+
+  var inp = [
+    ENC["Category"][cat],
+    ENC["Sub-Category"][subcat],
+    ENC["Region"][region],
+    ENC["Segment"][segment],
+    ENC["Ship Mode"][shipmode],
+    qty, disc, sales
+  ];
+
+  var total = 0;
+  for (var t = 0; t < TREES.length; t++) {
+    total += walkTree(TREES[t], inp);
+  }
+  var prob = total / TREES.length;
+
+  var isProfit = prob >= 0.5;
+  var conf = isProfit ? prob : (1 - prob);
+
+  document.getElementById('res-icon').textContent     = isProfit ? '✅' : '❌';
+  document.getElementById('res-verdict').textContent  = isProfit ? 'PROFITABLE' : 'LOSS';
+  document.getElementById('res-verdict').className    = 'res-verdict ' + (isProfit ? 'profit' : 'loss');
+  document.getElementById('res-conf').textContent     = 'Confidence: ' + (conf * 100).toFixed(1) + '%  |  Profit Probability: ' + (prob * 100).toFixed(1) + '%';
+
+  var bar = document.getElementById('res-bar');
+  bar.className = 'bar ' + (isProfit ? 'profit' : 'loss');
+  bar.style.width = '0%';
+  setTimeout(function() { bar.style.width = (prob * 100) + '%'; }, 100);
+
+  var tags = [];
+  if (disc === 0)       tags.push({l:'No Discount', t:'good'});
+  else if (disc <= 0.2) tags.push({l:'Low Discount (' + (disc*100) + '%)', t:'good'});
+  else                  tags.push({l:'High Discount (' + (disc*100) + '%)', t:'bad'});
+
+  if (cat === 'Technology')     tags.push({l:'Technology', t:'good'});
+  if (cat === 'Furniture')      tags.push({l:'Furniture', t:'bad'});
+  if (sales > 500)              tags.push({l:'High Sales', t:'good'});
+  if (qty > 8 && disc > 0.2)   tags.push({l:'High Qty + Discount', t:'bad'});
+
+  var html = '';
+  for (var i = 0; i < tags.length; i++) {
+    html += '<span class="tag ' + tags[i].t + '">' + tags[i].l + '</span>';
+  }
+  document.getElementById('res-tags').innerHTML = html;
+
+  var card = document.getElementById('result-card');
+  card.className = 'result show';
+  card.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// INIT
+document.getElementById('sel-category').onchange = fillSubcat;
+document.getElementById('inp-discount').oninput = function() {
+  document.getElementById('disc-label').textContent = this.value + '%';
+};
+document.getElementById('predict-btn').onclick = runPredict;
+fillSubcat();
+</script>
+</body>
+</html>
